@@ -1,0 +1,56 @@
+version: "3"
+
+services:
+  webserver:
+    build: 
+      context: ./bin/php8
+    container_name: 'lamp-php8'
+    restart: 'always'
+    ports:
+      - "80:80"
+      - "443:443"
+    links: 
+      - database
+    volumes: 
+      - ./www:/var/www/html
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - ./config/vhosts:/etc/apache2/sites-enabled
+      - ./logs/apache2:/var/log/apache2
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+      PMA_PORT: 8080
+      MYSQL_ROOT_PASSWORD: tiger
+  database:
+    build:
+      context: "./bin/mysql"
+    container_name: 'lamp-database'
+    restart: 'always'
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes: 
+      - ./data/mysql:/var/lib/mysql
+      - ./logs/mysql:/var/log/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: tiger
+      MYSQL_DATABASE: docker
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: 'lamp-phpmyadmin'
+    links:
+      - database
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: tiger
+      MYSQL_ROOT_PASSWORD: tiger
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+    ports:
+      - '8080:80'
+    volumes: 
+      - /sessions
+      - ./config/php/php.ini:/usr/local/etc/php/conf.d/php-phpmyadmin.ini
+  
